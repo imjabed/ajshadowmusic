@@ -66,6 +66,7 @@ export default function Admin(){
  const branding=()=> <><div className="ad-intro"><h2>Brand Identity</h2><p>Update your artist logo, website identity, and the browser tab icon without touching code.</p></div>
   <div className="ad-setting-section"><h3>Website logo</h3><p>Choose a text mark, uploaded logo, or both. The header and footer update in the preview.</p>
    <div className="ad-fields">{E('Brand / artist name','branding.siteName')}{E('Monogram letters','branding.logoMark')}{E('Logo alternative text','branding.logoAlt')}
+    <div className="ad-logo-presets"><small>Quick logo choices</small><div><button type="button" onClick={()=>{edit('branding.logoMode','wordmark');edit('branding.logoUrl','')}}>Wordmark only</button><button type="button" onClick={()=>{edit('branding.logoUrl','/favicons/aj.svg');edit('branding.logoMode','both')}}><img src="/favicons/aj.svg" alt=""/>AJ mark</button><button type="button" onClick={()=>{edit('branding.logoUrl','/favicons/mask.svg');edit('branding.logoMode','both')}}><img src="/favicons/mask.svg" alt=""/>Mask mark</button></div></div>
     <label className="ad-field"><span>Logo display</span><select value={data.branding?.logoMode||'wordmark'} onChange={e=>edit('branding.logoMode',e.target.value)}><option value="wordmark">Text and monogram</option><option value="both">Logo image + artist name</option><option value="image">Logo image only</option></select></label>
     {range('Logo image height','branding.logoHeight',22,90,1,'px')}
     {I('Header logo artwork','branding.logoUrl')}
