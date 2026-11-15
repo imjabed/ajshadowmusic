@@ -9,7 +9,7 @@ export const content = {
  videos:[{title:'THE CHASE',subtitle:'PROJECT FILM',youtubeId:'',image:''},{title:'THE VISUALS',subtitle:'MUSIC VIDEO',youtubeId:'',image:''}],
  labels:[{name:'Spiration Music',subtitle:'RELEASE PARTNER',image:'',link:''},{name:'Unted',subtitle:'RELEASE PARTNER',image:'',link:''}],
  texts:{
- musicEyebrow:'01 / THE SOUND',musicHeading:'THE MUSIC.',musicCaption:'For the ones who never stop chasing.',
+ navHome:'Home',navMusic:'Music',navVideos:'Visuals',navLabels:'Labels',navAbout:'About',heroScroll:'SCROLL TO EXPLORE',heroSignature:'AJ SHADOW / NO FACE. JUST DREAMS.',musicArtEyebrow:'AJ / SHADOW',playerEyebrow:'ARTIST RADIO',playerFooter:'THE SHADOW ARCHIVE',spotifyButton:'OPEN SPOTIFY',youtubeButton:'YOUTUBE CHANNEL',footerCopyright:'AJ SHADOW',musicEyebrow:'01 / THE SOUND',musicHeading:'THE MUSIC.',musicCaption:'For the ones who never stop chasing.',
  videosEyebrow:'02 / THE VISUALS',videosHeading:'IN MOTION.',labelsEyebrow:'03 / THE JOURNEY',labelsHeading:'THE LABELS.',
  aboutEyebrow:'04 / THE MOVEMENT',aboutHeading:'WHO IS SHADOW?',manifesto:'NO RELIGION.\nNO COLOUR.\nNO FACE.',
  aboutDescription:'Just a dream.\nAnyone with a dream can be a Shadow.',aboutSignoff:'WE ARE THE SHADOWS.',
