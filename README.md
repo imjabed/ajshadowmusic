@@ -26,6 +26,9 @@ The public site still renders bundled starter content without them, but editing,
 
 **Never use a `VITE_` prefix for secrets. Never commit real credentials.**
 
+For optional direct image uploads, also set `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` on Vercel. Without them, image URLs can still be pasted into the editor. Allowed image files: up to 8 MB. The secret remains server-side.
+
+
 ## Using the editor
 
 Open `https://YOUR-VERCEL-DOMAIN/admin`, enter the admin password, customize sections, click **Save Draft**, preview the changes, and then **Publish**. Public pages fetch the published document. You can change text, colors, song order, labels, artwork URLs, video IDs, social links, and section visibility/order.
