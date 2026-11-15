@@ -9,3 +9,37 @@
 .admin-login .ad-login-panel #shadow-admin-password:focus{outline:2px solid #e65d71;outline-offset:2px}
 .admin-login .ad-login-panel .ad-login-submit{display:flex!important;visibility:visible!important;opacity:1!important;position:static!important;transform:none!important;align-items:center;justify-content:center;width:100%;min-height:45px}
 .admin-login .ad-login-panel .ad-login-submit:disabled{opacity:.55!important;cursor:not-allowed}
+
+
+/* Dedicated native submit control unaffected by general button styling */
+.admin-login .ad-login-panel .ad-login-form input.ad-login-submit-input,
+.admin-login .ad-login-panel .ad-login-form input[type="submit"]{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  position:static!important;
+  transform:none!important;
+  width:100%!important;
+  height:52px!important;
+  min-height:52px!important;
+  margin:8px 0 0!important;
+  padding:13px 20px!important;
+  border:1px solid #df627c!important;
+  border-radius:10px!important;
+  background:#c84663!important;
+  color:#fff!important;
+  font:800 14px "DM Sans",sans-serif!important;
+  letter-spacing:.05em!important;
+  text-align:center!important;
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  cursor:pointer!important;
+  box-sizing:border-box!important;
+}
+.admin-login .ad-login-panel .ad-login-form input.ad-login-submit-input:disabled{
+  opacity:.65!important;
+  cursor:not-allowed!important;
+}
+.admin-login .ad-login-panel .ad-login-form input.ad-login-submit-input:not(:disabled):hover{
+  background:#e75b77!important;
+}
