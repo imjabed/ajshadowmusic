@@ -10,7 +10,7 @@
     "dev": "npm run dev -w client",
     "dev:api": "npm run dev -w server",
     "build": "npm run build -w client",
-    "start:api": "npm run start -w server"
+    "start:api": "npm run build && npm run start -w server"
   },
   "type": "module"
 }
