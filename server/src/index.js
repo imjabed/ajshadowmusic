@@ -6,6 +6,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import adminHandler from '../../api/admin.js';
 import contentHandler from '../../api/content.js';
+import {database} from '../../lib/db.js';
 
 const app=express();
 app.disable('x-powered-by');
@@ -28,4 +29,5 @@ app.use(express.static(staticRoot,{index:false}));
 app.get('*',(req,res)=>res.sendFile(path.join(staticRoot,'index.html'),err=>{if(err&&!res.headersSent)res.status(404).json({error:'Frontend not built'})}));
 
 const port=Number(process.env.PORT)||4000;
-app.listen(port,'0.0.0.0',()=>console.log('AJ Shadow backend listening on port '+port));
+app.listen(port,'0.0.0.0',()=>console.log('AJ Shadow website and API listening on port '+port));
+if(process.env.MONGODB_URI)database().then(()=>console.log('MongoDB connection established')).catch(e=>console.error('MongoDB connection check failed:',e.name));
