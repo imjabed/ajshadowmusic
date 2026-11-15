@@ -51,6 +51,26 @@ Open `/admin`. Enter the password configured on Render. Edit the hero, tracks, l
 
 If login fails, look for a specific UI error or the browser Network tab response. A backend `503` from `/api/admin` means `ADMIN_PASSWORD` is missing or `ADMIN_SESSION_SECRET` is under 32 characters. A `401` from a login attempt means the password is wrong; an unauthenticated GET should return `401`.
 
+## New admin tabs: Branding and Motion FX
+
+Use **Branding** inside `/admin` to change:
+
+- Artist name, header/footer logos, monogram letters, display mode (wordmark / image / combination), and logo height.
+- Browser tab title for the public website and Admin Studio, tab favicon, browser theme color, and page description.
+- Four included favicon choices: classic, mask, orbit, and AJ monogram; or set a custom image URL.
+- Built-in AJ and mask logo picks require no external image host. Custom image URLs work immediately; **Upload image** requires optional signed Cloudinary credentials on Render.
+
+Use **Motion FX** to control:
+
+- Master animation and glow switches, hero spotlight, ambient section glow, mouse glow, moving scanlines, and glitch title.
+- Particle on/off, particle quantity/speed, floating Shadow symbols, breathing artwork, float timing.
+- Scroll reveal, reveal distance/duration, parallax intensity, and card hover effects.
+- Cinematic, Subtle, and Minimal one-click presets.
+
+Motion effects respect `prefers-reduced-motion` and use bounded settings for performance. All edits are staged in the admin's live desktop/mobile preview, then saved using **Save Draft** and made public using **Publish**. Settings are stored in the existing MongoDB content document, and older content is merged with defaults.
+
+Browser-tab metadata changes are applied client-side after page load; if social media previews or search-engine metadata need server-rendered updates, a separate server-side metadata implementation is required.
+
 ## Development and tests
 
 ```bash
