@@ -2,6 +2,8 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
 import adminHandler from '../../api/admin.js';
 import contentHandler from '../../api/content.js';
 
@@ -21,7 +23,9 @@ app.use(cors({
 app.get('/api/health',(_,res)=>res.json({ok:true,database:mongoose.connection.readyState===1?'connected':'not-connected'}));
 app.all('/api/content',(req,res)=>contentHandler(req,res));
 app.all('/api/admin',(req,res)=>adminHandler(req,res));
-app.use((_,res)=>res.status(404).json({error:'Not found'}));
+const staticRoot=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../../client/dist');
+app.use(express.static(staticRoot,{index:false}));
+app.get('*',(req,res)=>res.sendFile(path.join(staticRoot,'index.html'),err=>{if(err&&!res.headersSent)res.status(404).json({error:'Frontend not built'})}));
 
 const port=Number(process.env.PORT)||4000;
 app.listen(port,'0.0.0.0',()=>console.log('AJ Shadow backend listening on port '+port));
