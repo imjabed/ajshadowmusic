@@ -51,3 +51,17 @@ The local Vite dev server can proxy /api routes only when you run a serverless e
 The API is implemented as Vercel functions in `api/`. The original `server/` Express scaffold remains for future independent backend deployment; it is not used by the admin editor.
 
 The repo contains no real passwords, API keys, or MongoDB credentials.
+
+
+## MongoDB Atlas and Render backend
+
+- Database: `ajshadowmusic`, collection: `shadowsites`.
+- Two initial documents have been seeded: `slug: draft` and `slug: published`.
+- The Express API runs through `server/src/index.js` and shares the authenticated handlers under `api/`.
+- For Render, import `render.yaml` (GitHub Blueprint) or create a Node web service from the repository. The service uses `npm install --no-audit --no-fund` to build, `npm run start:api` to start, and `/api/health` as its health check.
+- On Render, set `MONGODB_URI` to a connection string for a **dedicated least-privilege DB user** with readWrite on the `ajshadowmusic` database. Set `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` as secrets, and `CLIENT_ORIGIN` to the exact Vercel origin (HTTPS). Do not commit credentials.
+- Add Render outbound IPs to MongoDB Atlas Network Access. Avoid a broad public CIDR if stable egress is available.
+- On Vercel, set `VITE_API_BASE_URL` to the Render API origin, for example `https://ajshadowmusic-api.onrender.com` (replace with the actual URL, do not assume it exists), then rebuild the client.
+- The editor uses `/admin`; published public content is returned from the Render `/api/content` endpoint. Uploaded art uses signed Cloudinary uploads only when those secrets are configured.
+
+If the Vercel Git connection does not have project-creation privileges, import the repository manually via the Vercel dashboard after granting the connected GitHub app access. Once imported, use repository root, Vite, build command `npm run build`, and output directory `client/dist`.
