@@ -15,7 +15,7 @@ function validate(data){
  if(JSON.stringify(data).length>maxBytes)return false;
  for(const key of ['tracks','videos','labels'])if(data[key]&&(!Array.isArray(data[key])||data[key].length>80))return false;
  const links=[];
- const visit=(v,k='')=>{if(Array.isArray(v))v.forEach(x=>visit(x));else if(v&&typeof v==='object')Object.entries(v).forEach(([a,b])=>visit(b,a));else if(typeof v==='string'&&/^(image|url|link|spotify|youtube|instagram|soundcloud|heroMedia)$/i.test(k))links.push(v)};
+ const visit=(v,k='')=>{if(Array.isArray(v))v.forEach(x=>visit(x));else if(v&&typeof v==='object')Object.entries(v).forEach(([a,b])=>visit(b,a));else if(typeof v==='string'&&/(?:image|url|link|favicon|logo|poster|audio)$/i.test(k))links.push(v)};
  visit(data);return links.every(safeURL);
 }
 export default async function handler(req,res){
