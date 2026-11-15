@@ -3,7 +3,8 @@ import{ArrowLeft,ArrowUp,ArrowDown,ArrowUpRight,Plus,Trash2,Save,UploadCloud,Eye
 import{content as original}from'./content';
 import './admin.css';
 import {fetchApi} from './api';
-const tabs=[['hero','Hero',Image],['music','Songs',Music2],['videos','Videos',Video],['labels','Labels',Layers],['text','Text',Type],['appearance','Theme',Palette],['sections','Layout',Settings],['socials','Links',Globe]];
+import {applyBrowserIdentity,FAVICON_PRESETS,faviconSrc} from './site-settings';
+const tabs=[['branding','Branding',Globe],['hero','Hero',Image],['music','Songs',Music2],['videos','Videos',Video],['labels','Labels',Layers],['text','Text',Type],['appearance','Theme',Palette],['effects','Motion FX',Settings],['sections','Layout',Settings],['socials','Links',Globe]];
 const clone=x=>JSON.parse(JSON.stringify(x));
 const merge=(a,b)=>{if(Array.isArray(a))return Array.isArray(b)?b:a;if(a&&typeof a==='object'){const o={...a};for(const k in b||{})o[k]=k in a?merge(a[k],b[k]):b[k];return o}return b===undefined?a:b};
 const safeValue=(v)=>v??'';
@@ -31,6 +32,7 @@ export default function Admin(){
  async function api(method,body,credential=token){const res=await fetchApi('/api/admin',{method,headers:{'Content-Type':'application/json',Authorization:'Bearer '+credential},body:body?JSON.stringify(body):undefined});const json=await res.json().catch(()=>({}));if(!res.ok)throw Error(json.error||'Request failed');return json}
  async function load(t){try{const r=await api('GET',null,t);setData(merge(clone(original),r.draft||{}));setReady(true);setSaved(true)}catch(err){if(/unauthorized|expired/i.test(err.message)){sessionStorage.removeItem('shadow-admin-session');setToken('');setReady(false)}else{setReady(true)}message(err.message,true)}}
  useEffect(()=>{if(token)load(token)},[token]);
+ useEffect(()=>{applyBrowserIdentity({...original.branding,...data.branding},true)},[data.branding]);
  useEffect(()=>{if(!ready)return;const frameNode=frame.current;const emit=()=>frameNode?.contentWindow?.postMessage({type:'AJ_SHADOW_PREVIEW',data},window.location.origin);emit();const t=setTimeout(emit,400);return()=>clearTimeout(t)},[data,ready,view,tab]);
  const login=async e=>{e.preventDefault();setBusy(true);try{const r=await api('POST',{action:'login',password},'');sessionStorage.setItem('shadow-admin-session',r.token);setToken(r.token);setPassword('');setNotice('')}catch(err){message(err.message,true)}finally{setBusy(false)}};
  const save=async()=>{setBusy(true);try{await api('PUT',{data});setSaved(true);setDirty(false);message('Draft saved. Your public site is unchanged.')}catch(err){message(err.message,true)}finally{setBusy(false)}};
@@ -45,10 +47,76 @@ export default function Admin(){
  const videos=()=> <><div className="ad-intro"><h2>Music Videos</h2><p>Add YouTube IDs and thumbnails. Cards open your videos on-site.</p></div><Sortable kind="video" items={data.videos} onChange={v=>edit('videos',v)} create={()=>({title:'NEW VIDEO',subtitle:'OFFICIAL MUSIC VIDEO',youtubeId:'',image:''})} renderItem={(x,i,change)=><div className="ad-fields"><TextField label="Title" value={x.title} onChange={v=>change('title',v)}/><TextField label="Subtitle" value={x.subtitle} onChange={v=>change('subtitle',v)}/><TextField label="YouTube ID" value={x.youtubeId} onChange={v=>change('youtubeId',v)} hint="For youtube.com/watch?v=abc123, enter abc123"/><ImageField label="Thumbnail" value={x.image} onChange={v=>change('image',v)} token={token} onError={e=>message(e,true)}/></div>}/></>;
  const labels=()=> <><div className="ad-intro"><h2>Record Labels</h2><p>Manage label cards and artwork. Add, remove or reorder as your career evolves.</p></div><Sortable kind="label" items={data.labels} onChange={v=>edit('labels',v)} create={()=>({name:'New label',subtitle:'RELEASE PARTNER',image:'',link:''})} renderItem={(x,i,change)=><div className="ad-fields"><TextField label="Label name" value={x.name} onChange={v=>change('name',v)}/><TextField label="Subtitle" value={x.subtitle} onChange={v=>change('subtitle',v)}/><TextField label="Website URL" value={x.link} onChange={v=>change('link',v)}/><ImageField label="Logo / card image" value={x.image} onChange={v=>change('image',v)} token={token} onError={e=>message(e,true)}/></div>}/></>;
  const sections=()=> <><div className="ad-intro"><h2>Homepage Layout</h2><p>Show, hide or reorder sections. Hero remains first for the best first impression.</p></div><div className="ad-sort">{(data.sections||[]).map((s,i)=><div className="ad-section-row" key={s.id}><label><input type="checkbox" checked={s.visible!==false} onChange={e=>edit('sections',data.sections.map((a,j)=>j===i?{...a,visible:e.target.checked}:a))}/><strong>{s.id.toUpperCase()}</strong></label><div><button disabled={i<2} onClick={()=>{const arr=[...data.sections];[arr[i],arr[i-1]]=[arr[i-1],arr[i]];edit('sections',arr)}}><ArrowUp size={16}/></button><button disabled={i===0||i===data.sections.length-1} onClick={()=>{const arr=[...data.sections];[arr[i],arr[i+1]]=[arr[i+1],arr[i]];edit('sections',arr)}}><ArrowDown size={16}/></button></div></div>)}</div></>;
+
+ const toggle=(title,key,description='')=>{
+  const value=key.split('.').reduce((obj,k)=>obj?.[k],data);
+  return <label className="ad-effect-toggle" key={key}><input type="checkbox" checked={Boolean(value)} onChange={e=>edit(key,e.target.checked)}/><span><strong>{title}</strong>{description&&<small>{description}</small>}</span></label>;
+ };
+ const range=(title,key,min,max,step=1,unit='')=>{
+  const value=key.split('.').reduce((obj,k)=>obj?.[k],data);
+  const actual=Number.isFinite(Number(value))?Number(value):min;
+  return <label className="ad-effect-range" key={key}><span><strong>{title}</strong><b>{actual}{unit}</b></span><input type="range" min={min} max={max} step={step} value={actual} onChange={e=>edit(key,Number(e.target.value))}/><span className="ad-range-ends"><small>{min}{unit}</small><small>{max}{unit}</small></span></label>;
+ };
+ const applyFxPreset=style=>{
+  const defaults=clone(original.effects);
+  const preset=style==='cinematic'?defaults:style==='subtle'?{...defaults,pointerGlow:false,glowStrength:30,particleCount:7,particleSpeed:15,floatSpeed:22,scanlines:false,titleGlitch:false,revealDistance:25,revealDuration:.9}:{...defaults,motionEnabled:false,heroGlow:false,ambientGlow:false,pointerGlow:false,floatingSymbols:false,heroBreathing:false,scrollReveal:false,cardHover:false,particleCount:0,titleGlitch:false,scanlines:false};
+  setData(prev=>({...prev,effects:preset,theme:{...prev.theme,glow:style!=='static',particles:style!=='static',parallax:style==='static'?0:style==='subtle'?20:60}}));
+  setDirty(true);setNotice('');
+ };
+ const branding=()=> <><div className="ad-intro"><h2>Brand Identity</h2><p>Update your artist logo, website identity, and the browser tab icon without touching code.</p></div>
+  <div className="ad-setting-section"><h3>Website logo</h3><p>Choose a text mark, uploaded logo, or both. The header and footer update in the preview.</p>
+   <div className="ad-fields">{E('Brand / artist name','branding.siteName')}{E('Monogram letters','branding.logoMark')}{E('Logo alternative text','branding.logoAlt')}
+    <label className="ad-field"><span>Logo display</span><select value={data.branding?.logoMode||'wordmark'} onChange={e=>edit('branding.logoMode',e.target.value)}><option value="wordmark">Text and monogram</option><option value="both">Logo image + artist name</option><option value="image">Logo image only</option></select></label>
+    {range('Logo image height','branding.logoHeight',22,90,1,'px')}
+    {I('Header logo artwork','branding.logoUrl')}
+    {I('Footer logo (optional: uses header logo)','branding.footerLogoUrl')}
+   </div>
+  </div>
+  <div className="ad-setting-section"><h3>Browser tab & metadata</h3><p>Change the tab title, favicon, browser toolbar color and search description. Preview updates immediately; visitors see published changes after refresh.</p>
+   <div className="ad-fields">{E('Public website tab title','branding.pageTitle')}{E('Admin Studio tab title','branding.adminTitle')}{E('Website description','branding.metaDescription',true)}
+    <label className="ad-field"><span>Browser theme color</span><div className="ad-color-inline"><input type="color" value={data.branding?.browserThemeColor||'#09090c'} onChange={e=>edit('branding.browserThemeColor',e.target.value)}/><code>{data.branding?.browserThemeColor||'#09090c'}</code></div></label>
+   </div>
+   <h4>Favicon library</h4><div className="ad-favicons">{FAVICON_PRESETS.map(item=><button key={item.id} type="button" aria-label={'Use '+item.label+' favicon'} aria-pressed={!data.branding?.faviconUrl&&(data.branding?.faviconPreset||'classic')===item.id} className={!data.branding?.faviconUrl&&(data.branding?.faviconPreset||'classic')===item.id?'selected':''} onClick={()=>{edit('branding.faviconPreset',item.id);edit('branding.faviconUrl','')}}><img src={item.url} alt=""/><span>{item.label}</span></button>)}</div>
+   {I('Custom favicon URL (overrides selected icon)','branding.faviconUrl')}
+   <div className="ad-favicon-preview"><img src={faviconSrc(data.branding||{})} alt="Chosen favicon"/><div><strong>Current browser tab icon</strong><small>{data.branding?.pageTitle||'AJ SHADOW'}</small></div></div>
+  </div>
+ </>;
+ const effects=()=> <><div className="ad-intro"><h2>Motion & Effects</h2><p>Control the cinematic Shadow atmosphere, including glow, particles, reveal animations and hover effects. All options preview live.</p></div>
+   <div className="ad-preset-row"><span>Quick looks</span><div><button type="button" onClick={()=>applyFxPreset('cinematic')}>Cinematic</button><button type="button" onClick={()=>applyFxPreset('subtle')}>Subtle</button><button type="button" onClick={()=>applyFxPreset('static')}>Minimal</button></div></div>
+   <div className="ad-setting-section"><h3>Master controls</h3>
+    {toggle('Enable animations','effects.motionEnabled','Turn off all motion-heavy effects at once.')}
+    {toggle('Enable glow effects','theme.glow','Master switch for the lighting atmosphere.')}
+    {toggle('Floating light particles','theme.particles','Toggle drifting lights in the hero.')}
+   </div>
+   <div className="ad-setting-section"><h3>Light & Shadow</h3>
+    {toggle('Hero spotlight','effects.heroGlow','Glowing light behind the main character.')}
+    {toggle('Ambient section glows','effects.ambientGlow','Soft light accents around the music and label sections.')}
+    {toggle('Mouse-following glow','effects.pointerGlow','Ambient light follows the visitor’s mouse on desktop.')}
+    {toggle('Moving scanlines','effects.scanlines','Subtle cinematic texture across the page.')}
+    {toggle('Glitch title animation','effects.titleGlitch','Brief Shadow-style glitch highlights on the main title.')}
+    {range('Light strength','effects.glowStrength',0,100,5,'%')}
+    {range('Pointer glow diameter','effects.pointerGlowSize',160,600,20,'px')}
+   </div>
+   <div className="ad-setting-section"><h3>Particles & floating elements</h3>
+    {toggle('Floating A / S symbols','effects.floatingSymbols','Moving oversized letters behind the hero.')}
+    {toggle('Breathing hero light','effects.heroBreathing','Slow pulsing highlight on the hero artwork.')}
+    {range('Particle quantity','effects.particleCount',0,60)}
+    {range('Particle cycle','effects.particleSpeed',3,20,1,'s')}
+    {range('Floating motion cycle','effects.floatSpeed',4,30,1,'s')}
+   </div>
+   <div className="ad-setting-section"><h3>Scroll & interaction</h3>
+    {toggle('Reveal sections on scroll','effects.scrollReveal','Fade and move sections into view.')}
+    {toggle('Card hover lift','effects.cardHover','Give music-video and label cards subtle interaction.')}
+    {range('Parallax intensity','theme.parallax',0,100,5,'%')}
+    {range('Reveal distance','effects.revealDistance',0,150,5,'px')}
+    {range('Reveal duration','effects.revealDuration',.2,2,.1,'s')}
+   </div>
+   <p className="ad-motion-note">Reduced-motion system preferences are respected. Save Draft and Publish to apply your choices permanently.</p>
+ </>;
  const appearance=()=> <><div className="ad-intro"><h2>Appearance</h2><p>Your Shadow universe, your colors and movement.</p></div><div className="ad-colors">{[['Accent','accent'],['Background','background'],['Panels','surface'],['Text','text']].map(([title,key])=><label key={key}><span>{title}</span><input type="color" value={data.theme?.[key]||'#111111'} onChange={e=>edit('theme.'+key,e.target.value)}/><code>{data.theme?.[key]}</code></label>)}</div><div className="ad-fields">{[['Body font','font'],['Heading font','headingFont']].map(([label,key])=><label className="ad-field" key={key}><span>{label}</span><select value={data.theme?.[key]||'DM Sans'} onChange={e=>edit('theme.'+key,e.target.value)}>{['DM Sans','Barlow Condensed','Inter','Montserrat','Outfit','Space Grotesk','Syne'].map(font=><option key={font} value={font}>{font}</option>)}</select></label>)}<label className="ad-field"><span>Parallax intensity: {data.theme?.parallax||0}%</span><input type="range" min="0" max="100" value={data.theme?.parallax||0} onChange={e=>edit('theme.parallax',Number(e.target.value))}/></label>{[['Glow effects','glow'],['Floating particles','particles']].map(([label,key])=><label className="ad-check" key={key}><input type="checkbox" checked={data.theme?.[key]!==false} onChange={e=>edit('theme.'+key,e.target.checked)}/>{label}</label>)}</div></>;
  const text=()=> <><div className="ad-intro"><h2>Every Word</h2><p>Edit headings, captions, philosophy and buttons across the website.</p></div><div className="ad-fields">{Object.keys(data.texts||{}).map(k=><TextField key={k} label={k.replace(/([A-Z])/g,' $1').replace(/^./,s=>s.toUpperCase())} value={data.texts[k]} area={/manifesto|description|artTitle/i.test(k)} onChange={v=>edit('texts.'+k,v)}/>)}</div></>;
  const hero=()=> <><div className="ad-intro"><h2>Current Project</h2><p>The first thing a visitor sees. Choose your artwork, title and cinematic identity.</p></div><div className="ad-fields">{E('Project eyebrow','project.eyebrow')}{E('Project title','project.title')}{E('Project strapline','project.label')}{E('Short tagline','project.tagline')}{E('Primary button','project.buttonText')}{E('Secondary button','project.secondButton')}{I('Hero artwork','project.image')}{E('Featured video URL (optional)','project.videoUrl')}</div></>;
  const socials=()=> <><div className="ad-intro"><h2>Social Links</h2><p>Connect people to your official platforms.</p></div><div className="ad-fields">{Object.keys(data.socials).map(k=><TextField key={k} label={k.toUpperCase()+' URL'} value={data.socials[k]} onChange={v=>edit('socials.'+k,v)}/>)}</div></>;
- const views={hero,music,videos,labels,text,appearance,sections,socials};
+ const views={branding,hero,music,videos,labels,text,appearance,effects,sections,socials};
  return <div className="ad-shell"><aside className="ad-sidebar"><div className="ad-logo">AJ<span>SHADOW</span><small>STUDIO</small></div><p className="ad-side-label">WEBSITE EDITOR</p><nav>{tabs.map(([id,title,Icon])=><button key={id} className={tab===id?'active':''} onClick={()=>setTab(id)}><Icon size={17}/>{title}</button>)}</nav><div className="ad-sidebar-bottom"><a href="/" target="_blank" rel="noreferrer"><ArrowUpRight size={16}/> View website</a><button onClick={logout}><LogOut size={16}/> Sign out</button></div></aside><div className="ad-main"><header className="ad-top"><div><small>AJ SHADOW / STUDIO</small><strong>{tabs.find(t=>t[0]===tab)?.[1]} Editor</strong></div><div className="ad-actions"><span className={isDirty?'ad-unsaved':'ad-saved'}>{isDirty?'Unsaved changes':'Draft ready'}</span><button className="ad-ghost" onClick={save} disabled={busy}><Save size={15}/> Save Draft</button><button className="ad-primary" onClick={publish} disabled={busy}><UploadCloud size={16}/> Publish</button></div></header><div className="ad-body"><section className="ad-edit"><div className="ad-edit-inner">{views[tab]?.()}{notice&&<div role="status" className={'ad-notice '+(notice.startsWith('Error:')?'error':'')}><AlertCircle size={17}/>{notice}</div>}</div></section><section className="ad-preview"><div className="ad-preview-top"><span><Eye size={16}/> LIVE PREVIEW</span><div><button title="Desktop preview" className={view==='desktop'?'active':''} onClick={()=>setView('desktop')}><Monitor size={17}/></button><button title="Mobile preview" className={view==='mobile'?'active':''} onClick={()=>setView('mobile')}><Smartphone size={17}/></button></div></div><div className={'ad-frame '+view}><iframe ref={frame} title="Website preview" src="/?preview=1" onLoad={()=>frame.current?.contentWindow?.postMessage({type:'AJ_SHADOW_PREVIEW',data},window.location.origin)}/></div></section></div></div></div>;
 }
