@@ -2,7 +2,7 @@ export const content = {
  artist:'AJ SHADOW',
  branding:{
   siteName:'AJ SHADOW',
-  logoMode:'wordmark',
+  logoMode:'both',
   logoUrl:'',
   footerLogoUrl:'',
   logoAlt:'AJ Shadow music artist logo',
