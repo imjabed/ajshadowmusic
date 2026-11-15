@@ -1,4 +1,4 @@
-import {createHmac,timingSafeEqual,randomBytes} from 'node:crypto';
+import {createHmac,timingSafeEqual,randomBytes,createHash} from 'node:crypto';
 import {database,send} from './_db.js';
 const maxBytes=350000;
 const hmac=value=>createHmac('sha256',process.env.ADMIN_SESSION_SECRET).update(value).digest('hex');
@@ -29,6 +29,16 @@ export default async function handler(req,res){
   return send(res,200,{token:payload+'.'+hmac(payload)});
  }
  if(!verified(req))return send(res,401,{error:'Session expired or unauthorized'});
+ if(req.method==='POST'&&req.body?.action==='sign_upload'){
+  const cloudName=process.env.CLOUDINARY_CLOUD_NAME;
+  const apiKey=process.env.CLOUDINARY_API_KEY;
+  const apiSecret=process.env.CLOUDINARY_API_SECRET;
+  if(!cloudName||!apiKey||!apiSecret)return send(res,503,{error:'Add CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET to enable uploads. You can paste an image URL without these.'});
+  const timestamp=Math.floor(Date.now()/1000);
+  const folder='ajshadowmusic';
+  const signature=createHash('sha1').update('folder='+folder+'&timestamp='+timestamp+apiSecret).digest('hex');
+  return send(res,200,{cloudName,apiKey,timestamp,folder,signature});
+ }
  try{
   const Model=await database();
   if(req.method==='GET'){
