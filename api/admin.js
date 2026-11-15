@@ -1,5 +1,5 @@
 import {createHmac,timingSafeEqual,randomBytes,createHash} from 'node:crypto';
-import {database,send} from './_db.js';
+import {database,send} from '../lib/db.js';
 const maxBytes=350000;
 const hmac=value=>createHmac('sha256',process.env.ADMIN_SESSION_SECRET).update(value).digest('hex');
 const eq=(a,b)=>{const x=Buffer.from(String(a)),y=Buffer.from(String(b));return x.length===y.length&&timingSafeEqual(x,y)};
