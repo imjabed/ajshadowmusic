@@ -1,0 +1,15 @@
+{
+  "name": "ajshadowmusic",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w client",
+    "dev:api": "npm run dev -w server",
+    "build": "npm run build -w client",
+    "start:api": "npm run start -w server"
+  }
+}
