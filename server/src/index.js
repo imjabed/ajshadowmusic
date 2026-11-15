@@ -30,4 +30,5 @@ app.get('*',(req,res)=>res.sendFile(path.join(staticRoot,'index.html'),err=>{if(
 
 const port=Number(process.env.PORT)||4000;
 app.listen(port,'0.0.0.0',()=>console.log('AJ Shadow website and API listening on port '+port));
+console.log('Admin setup check: password='+ (process.env.ADMIN_PASSWORD?'configured':'missing') +', sessionSecret='+(process.env.ADMIN_SESSION_SECRET?.length>=32?'valid':'missing-or-too-short'));
 if(process.env.MONGODB_URI)database().then(()=>console.log('MongoDB connection established')).catch(e=>console.error('MongoDB connection check failed:',e.name));
