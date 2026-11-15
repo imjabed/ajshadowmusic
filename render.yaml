@@ -1,0 +1,31 @@
+# Render Blueprint for AJ Shadow admin API.
+# Import this Blueprint from the private GitHub repository.
+services:
+  - type: web
+    name: ajshadowmusic-api
+    runtime: node
+    plan: free
+    branch: main
+    buildCommand: npm install --no-audit --no-fund
+    startCommand: npm run start:api
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "20"
+      - key: MONGODB_URI
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_SESSION_SECRET
+        sync: false
+      - key: CLIENT_ORIGIN
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
