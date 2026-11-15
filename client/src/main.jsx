@@ -3,7 +3,7 @@ import{createRoot}from'react-dom/client';
 import{motion,useScroll,useTransform,AnimatePresence}from'framer-motion';
 import{Play,Pause,SkipBack,SkipForward,ArrowUpRight,ArrowDown,Instagram,Youtube,Headphones,Menu,X,Volume2}from'lucide-react';
 import{content as initial}from'./content';
-import Admin from './Admin';
+import {AdminWithRecovery} from './Admin';
 import './styles.css';
 
 function App(){
@@ -34,4 +34,4 @@ function App(){
  <footer><div className="footer-main"><a className="brand" href="#home"><span className="brand-mark">A</span> AJ <strong>SHADOW</strong></a><div>{links.slice(1).map(([href,name])=><a key={href} href={href}>{name}</a>)}</div><div className="footer-social">{external(data.socials.instagram,<Instagram size={18}/>)}{external(data.socials.youtube,<Youtube size={19}/>)}{external(data.socials.spotify,<Headphones size={19}/>)}</div></div><div className="footer-bottom"><span>© {new Date().getFullYear()} {data.texts?.footerCopyright}</span><span>{data.texts?.footerText}</span></div></footer>
  <AnimatePresence>{video&&<motion.div className="modal" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} role="dialog" aria-modal="true" onClick={()=>setVideo(null)}><button aria-label="Close" onClick={()=>setVideo(null)}><X/></button><iframe title={video.title} onClick={e=>e.stopPropagation()} src={'https://www.youtube-nocookie.com/embed/'+encodeURIComponent(video.youtubeId)+'?autoplay=1'} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen/></motion.div>}</AnimatePresence></>
 }
-createRoot(document.getElementById('root')).render(location.pathname.startsWith('/admin')?<Admin/>:<App/>);
+createRoot(document.getElementById('root')).render(location.pathname.startsWith('/admin')?<AdminWithRecovery/>:<App/>);
