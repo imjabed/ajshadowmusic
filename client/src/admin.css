@@ -82,3 +82,5 @@
 .ad-favicon-preview small{font-size:10px;color:#928b93;overflow-wrap:anywhere}
 .ad-motion-note{font-size:11px;color:#8f838c;line-height:1.6}
 @media(max-width:660px){.ad-favicons{grid-template-columns:repeat(2,minmax(0,1fr))}.ad-setting-section{padding:16px}.ad-effect-range b{white-space:nowrap}}
+
+.ad-logo-presets{margin:0 0 15px}.ad-logo-presets>small{color:#c7bdc2;font-size:11px;font-weight:700;letter-spacing:.1em}.ad-logo-presets>div{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}.ad-logo-presets button{display:inline-flex;align-items:center;gap:7px;border:1px solid #ffffff2b;border-radius:9px;padding:10px;background:#0b0b11;color:#eee;font-size:11px;cursor:pointer}.ad-logo-presets button:hover{border-color:#e56280}.ad-logo-presets img{height:26px;width:26px;object-fit:contain}
