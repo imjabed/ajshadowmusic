@@ -1,0 +1,51 @@
+name: Render API + CORS health check
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  statuses: write
+jobs:
+  render-api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify published content, admin protection and browser CORS
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const base='https://ajshadowmusic-api.onrender.com';
+          const origin='https://ajshadowmusic.vercel.app';
+          let error;
+          for(let attempt=1;attempt<=5;attempt++){
+            try{
+              const publicResponse=await fetch(base+'/api/content',{signal:AbortSignal.timeout(20000)});
+              if(!publicResponse.ok)throw Error('Content HTTP '+publicResponse.status);
+              const body=await publicResponse.json();
+              if(!body?.project?.title)throw Error('No published project title');
+              const options=await fetch(base+'/api/admin',{method:'OPTIONS',headers:{Origin:origin,'Access-Control-Request-Method':'POST','Access-Control-Request-Headers':'content-type,authorization'},signal:AbortSignal.timeout(15000)});
+              if(!options.ok)throw Error('CORS preflight HTTP '+options.status);
+              const allowed=options.headers.get('access-control-allow-origin');
+              if(allowed!==origin)throw Error('CORS allow-origin missing');
+              const invalid=await fetch(base+'/api/admin',{method:'POST',headers:{'Content-Type':'application/json',Origin:origin},body:JSON.stringify({action:'login',password:'definitely-invalid-test-password'}),signal:AbortSignal.timeout(15000)});
+              if(invalid.status!==401)throw Error('Invalid login HTTP '+invalid.status);
+              console.log('PASS: Render DB content, protected admin route and CORS for Vercel.');
+              process.exit(0);
+            }catch(e){error=e;console.log('Attempt '+attempt+': '+e.message);if(attempt<5)await new Promise(r=>setTimeout(r,8000))}
+          }
+          fs.writeFileSync('render-smoke-reason.txt',String(error?.message||'unknown').replace(/https?:\/\/\S+/g,'URL').slice(0,65));
+          process.exit(1);
+          NODE
+      - name: Publish Render health result
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ job.status }}
+        run: |
+          if [ "$RESULT" = "success" ]; then state=success; context="AJ Render Health"; else state=failure; reason=$(head -c 65 render-smoke-reason.txt 2>/dev/null | tr -cd '[:alnum:] :_-'); context="AJ Render Health: ${reason:-failed}"; fi
+          curl --silent --show-error --fail -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -d "{\"state\":\"$state\",\"context\":\"$context\",\"description\":\"Production content, CORS and admin protection\"}"
