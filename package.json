@@ -10,8 +10,9 @@
     "dev": "npm run dev -w client",
     "dev:api": "npm run dev -w server",
     "build": "npm run build -w client",
-    "start:api": "npm run build && npm run start -w server",
-    "test:e2e": "playwright test"
+    "start:api": "npm run start -w server",
+    "test:e2e": "playwright test",
+    "postinstall": "node scripts/render-postinstall.cjs"
   },
   "type": "module",
   "devDependencies": {
