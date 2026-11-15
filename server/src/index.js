@@ -1,10 +1,27 @@
-import 'dotenv/config';import express from 'express';import cors from 'cors';import mongoose from 'mongoose';
-const app=express();app.disable('x-powered-by');app.use(express.json({limit:'100kb'}));app.use(cors({origin:process.env.CLIENT_ORIGIN||false}));
-const schema=new mongoose.Schema({slug:{type:String,unique:true,default:'homepage'},project:mongoose.Schema.Types.Mixed,tracks:[mongoose.Schema.Types.Mixed],videos:[mongoose.Schema.Types.Mixed],labels:[mongoose.Schema.Types.Mixed],socials:mongoose.Schema.Types.Mixed},{timestamps:true,strict:false});
-const Site=mongoose.model('Site',schema);
+import 'dotenv/config';
+import express from 'express';
+import cors from 'cors';
+import mongoose from 'mongoose';
+import adminHandler from '../../api/admin.js';
+import contentHandler from '../../api/content.js';
+
+const app=express();
+app.disable('x-powered-by');
+app.set('trust proxy',1);
+app.use(express.json({limit:'350kb'}));
+const allowed=(process.env.CLIENT_ORIGIN||'').split(',').map(x=>x.trim()).filter(Boolean);
+app.use(cors({
+ origin(origin,cb){
+   if(!origin||allowed.includes(origin)||/^http:\/\/localhost:(3000|5173|5174)$/.test(origin))return cb(null,true);
+   return cb(null,false);
+ },
+ methods:['GET','POST','PUT','OPTIONS'],
+ allowedHeaders:['Content-Type','Authorization']
+}));
 app.get('/api/health',(_,res)=>res.json({ok:true,database:mongoose.connection.readyState===1?'connected':'not-connected'}));
-app.get('/api/content',async(_,res)=>{try{if(mongoose.connection.readyState!==1)return res.status(503).json({error:'Database not configured'});const d=await Site.findOne({slug:'homepage'}).select('-_id -__v').lean();res.json(d||{})}catch{res.status(500).json({error:'Unable to load content'})}});
+app.all('/api/content',(req,res)=>contentHandler(req,res));
+app.all('/api/admin',(req,res)=>adminHandler(req,res));
 app.use((_,res)=>res.status(404).json({error:'Not found'}));
+
 const port=Number(process.env.PORT)||4000;
-async function start(){if(process.env.MONGODB_URI){try{await mongoose.connect(process.env.MONGODB_URI,{serverSelectionTimeoutMS:5000})}catch(e){console.error('MongoDB connection failed:',e.message)}}app.listen(port,()=>console.log('AJ Shadow API running on port '+port))}
-start();
+app.listen(port,'0.0.0.0',()=>console.log('AJ Shadow backend listening on port '+port));
