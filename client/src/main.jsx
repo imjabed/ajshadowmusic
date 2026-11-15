@@ -5,6 +5,7 @@ import{Play,Pause,SkipBack,SkipForward,ArrowUpRight,ArrowDown,Instagram,Youtube,
 import{content as initial}from'./content';
 import {AdminWithRecovery} from './Admin';
 import './styles.css';
+import {apiPath} from './api';
 
 function App(){
  const [data,setData]=useState(initial),[menu,setMenu]=useState(false),[index,setIndex]=useState(0),[playing,setPlaying]=useState(false),[time,setTime]=useState(0),[duration,setDuration]=useState(0),[muted,setMuted]=useState(false),[video,setVideo]=useState(null);
@@ -14,7 +15,7 @@ function App(){
  const sectionProps=id=>({style:{order:Math.max(0,(data.sections||[]).findIndex(s=>s.id===id))},hidden:data.sections?.find(s=>s.id===id)?.visible===false});
  const headline=value=>{const words=String(value||'').trim().split(/\s+/);return <>{words.slice(0,-1).join(' ')} <em>{words.at(-1)}</em></>};
  const spotifyId=url=>{const match=String(url||'').match(/open\.spotify\.com\/(?:intl-[a-z]+\/)?track\/([a-zA-Z0-9]+)/);return match?.[1]||''};
- useEffect(()=>{const base=import.meta.env.VITE_API_BASE_URL?.replace(/\/$/,'')||'';fetch(base+'/api/content').then(r=>r.ok?r.json():null).then(v=>{if(v&&Object.keys(v).length)setData(p=>({...p,...v,project:{...p.project,...v.project},texts:{...p.texts,...v.texts},images:{...p.images,...v.images},theme:{...p.theme,...v.theme},socials:{...p.socials,...v.socials}}))}).catch(()=>{})},[]);
+ useEffect(()=>{fetch(apiPath('/api/content').then(r=>r.ok?r.json():null).then(v=>{if(v&&Object.keys(v).length)setData(p=>({...p,...v,project:{...p.project,...v.project},texts:{...p.texts,...v.texts},images:{...p.images,...v.images},theme:{...p.theme,...v.theme},socials:{...p.socials,...v.socials}}))}).catch(()=>{})},[]);
  useEffect(()=>{if(!new URLSearchParams(location.search).has('preview'))return;const listener=e=>{if(e.origin===location.origin&&e.data?.type==='AJ_SHADOW_PREVIEW'&&e.data.data)setData(e.data.data)};window.addEventListener('message',listener);return()=>window.removeEventListener('message',listener)},[]);
  useEffect(()=>{const root=document.documentElement,theme=data.theme||{};for(const [css,key] of [['--accent','accent'],['--page-bg','background'],['--surface','surface'],['--page-text','text']])if(theme[key])root.style.setProperty(css,theme[key]);if(theme.font)root.style.setProperty('--body-font',JSON.stringify(theme.font)+',sans-serif');if(theme.headingFont)root.style.setProperty('--heading-font',JSON.stringify(theme.headingFont)+',sans-serif');return()=>{}},[data.theme]);
  useEffect(()=>{let a=audio.current;if(!a)return;a.pause();a.removeAttribute('src');a.load();setPlaying(false);setTime(0);setDuration(0);if(data.tracks[index]?.audioUrl)a.src=data.tracks[index].audioUrl},[index,data.tracks]);
