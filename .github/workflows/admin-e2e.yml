@@ -5,6 +5,7 @@ on:
   pull_request:
 permissions:
   contents: read
+  statuses: write
 jobs:
   admin-e2e:
     runs-on: ubuntu-latest
@@ -24,3 +25,16 @@ jobs:
           name: admin-playwright-failures
           path: test-results/
           retention-days: 3
+
+      - name: Report admin smoke test commit status
+        if: always() && github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ job.status }}
+        run: |
+          if [ "$RESULT" = "success" ]; then state="success"; else state="failure"; fi
+          curl --silent --show-error --fail -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -d "{\"state\":\"$state\",\"context\":\"AJ Admin E2E\",\"description\":\"Admin login, editor and publishing smoke tests\"}"
