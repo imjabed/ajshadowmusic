@@ -73,3 +73,5 @@ em{color:var(--accent)}
 @keyframes glitchPulse{0%,92%,96%,100%{opacity:0;transform:none}93%{opacity:.7;transform:translateX(4px)}94%{opacity:.5;transform:translate(-3px,-1px)}95%{opacity:.1;transform:translateX(1px)}}
 @media(hover:none),(pointer:coarse){.shadow-cursor-glow{display:none!important}}
 @media(prefers-reduced-motion:reduce){.shadow-cursor-glow,.shadow-scanlines,.hero-copy h1.shadow-glitch:after{display:none!important}.shadow-symbol,.hero-person,.shadow-particles i{animation:none!important}}
+
+@media(max-width:580px){.topbar .brand-with-image .brand-name{display:none}.topbar .brand-image{max-width:105px;max-height:45px}}
