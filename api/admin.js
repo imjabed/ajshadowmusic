@@ -21,7 +21,7 @@ function validate(data){
 export default async function handler(req,res){
  if(!['POST','GET','PUT'].includes(req.method))return send(res,405,{error:'Method not allowed'});
  const secret=process.env.ADMIN_SESSION_SECRET;const pass=process.env.ADMIN_PASSWORD;
- if(!secret||secret.length<32||!pass)return send(res,503,{error:'Set ADMIN_PASSWORD and a random ADMIN_SESSION_SECRET (32+ characters) in Vercel.'});
+ if(!secret||secret.length<32||!pass)return send(res,503,{error:'Admin credentials are not fully configured in Render. Set ADMIN_PASSWORD and ADMIN_SESSION_SECRET (at least 32 characters).'});
  if(req.method==='POST'&&req.body?.action==='login'){
   if(typeof req.body.password!=='string')return send(res,400,{error:'Invalid credentials'});
   if(!eq(req.body.password,pass))return send(res,401,{error:'Invalid credentials'});
