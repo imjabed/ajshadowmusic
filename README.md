@@ -1,67 +1,66 @@
-# AJ SHADOW — Website and Admin CMS
+# AJ SHADOW — website + protected editing studio
 
-Full-stack music artist site with cinematic parallax and a no-code content editor.
+Cinematic React/Vite artist portfolio with a no-code admin studio, Express API on Render, and MongoDB Atlas.
+
+## Live services
+
+- Public website and admin: https://ajshadowmusic.vercel.app/ and https://ajshadowmusic.vercel.app/admin
+- Render API: https://ajshadowmusic-api.onrender.com
+- MongoDB Atlas database: `ajshadowmusic`, collection: `shadowsites`
+- Draft and published pages are separate records (`slug: draft`, `slug: published`).
+
+## Architecture
+
+Vercel serves the React frontend. In production, requests to `/backend/api/*` are proxied by `vercel.json` to Render's `/api/*` endpoints. The frontend can also fall back to the direct Render origin if the proxy isn't available, with Render permitting only explicitly configured origins through CORS. A direct Render deployment serves the same React frontend and API on one domain.
+
+Admin logins issue signed sessions valid for eight hours. Save Draft saves only to the draft record; Publish replaces the published record. Artwork uploads require optional Cloudinary credentials.
+
+## Required environment variables — Render ONLY
+
+Configure on Render's **Environment** page; don't store credentials in GitHub or in the browser:
+
+| Key | Value |
+| --- | --- |
+| `MONGODB_URI` | Atlas URL for a user with `readWrite` on `ajshadowmusic` |
+| `ADMIN_PASSWORD` | A unique strong password for the studio |
+| `ADMIN_SESSION_SECRET` | Cryptographically random string of **at least 32 characters** |
+| `CLIENT_ORIGIN` | `https://ajshadowmusic.vercel.app` |
+
+Optional image uploads require `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` and `CLOUDINARY_API_SECRET` **on Render**.
+
+**Never put `MONGODB_URI`, `ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET`, or Cloudinary secrets in Vite / Vercel `VITE_*` settings.** Avoid importing example `.env` placeholders over working production variables.
 
 ## Vercel deployment
 
 - Framework: Vite
-- Root directory: repository root
+- Root: repository root
 - Build: `npm run build`
 - Output: `client/dist`
-- Frontend route: `/`
-- Admin route: `/admin`
-- API routes: `/api/content` and `/api/admin`
+- No environment variables are required for the production website to contact Render. `VITE_API_BASE_URL` is supported for local development only.
+- `vercel.json` configures `/backend/:path*` as a reverse proxy to Render, followed by the SPA fallback.
 
-## Required environment variables for the editor
+## Render deployment
 
-Set these under Vercel → Project → Settings → Environment Variables, then redeploy:
+Render workspace: AJ Shadow; service: `ajshadowmusic-api`. The Node web service builds with `npm install --no-audit --no-fund` and starts with `npm run start:api`. The `RENDER=true` environment marker makes `postinstall` build the React static assets **during deployment**, avoiding slow rebuilds when Render wakes from sleep.
 
-| Variable | Notes |
-| --- | --- |
-| `MONGODB_URI` | MongoDB Atlas URI; server-side only |
-| `ADMIN_PASSWORD` | Choose a unique strong password; server-side only |
-| `ADMIN_SESSION_SECRET` | Random secret at least 32 characters; server-side only |
+The Render outbound CIDR blocks `74.220.52.0/24` and `74.220.60.0/24` are allowed in Atlas Network Access. The API health endpoint is `/api/health`. Logs report only whether admin credentials are configured; they never print secret values.
 
-The public site still renders bundled starter content without them, but editing, saving and publishing require all three.
+## Admin usage
 
-**Never use a `VITE_` prefix for secrets. Never commit real credentials.**
+Open `/admin`. Enter the password configured on Render. Edit the hero, tracks, labels, videos, texts, colors, fonts and section order. Preview changes, **Save Draft**, then **Publish**. Published changes should appear on the public page after a refresh.
 
-For optional direct image uploads, also set `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` on Vercel. Without them, image URLs can still be pasted into the editor. Allowed image files: up to 8 MB. The secret remains server-side.
+If login fails, look for a specific UI error or the browser Network tab response. A backend `503` from `/api/admin` means `ADMIN_PASSWORD` is missing or `ADMIN_SESSION_SECRET` is under 32 characters. A `401` from a login attempt means the password is wrong; an unauthenticated GET should return `401`.
 
-
-## Using the editor
-
-Open `https://YOUR-VERCEL-DOMAIN/admin`, enter the admin password, customize sections, click **Save Draft**, preview the changes, and then **Publish**. Public pages fetch the published document. You can change text, colors, song order, labels, artwork URLs, video IDs, social links, and section visibility/order.
-
-Use HTTPS URLs for images. Song audio playback needs an authorized public audio file URL; Spotify song links can open the official Spotify page. YouTube video IDs enable the in-page video modal.
-
-## Local development
-
-Requires Node.js 20+ and MongoDB Atlas.
+## Development and tests
 
 ```bash
 npm install
-npm run dev
+npm run dev          # Vite development server
+npm run build        # Production frontend
+npm run test:e2e     # Playwright browser regression tests
+npm run start:api    # Express server (serve built frontend)
 ```
 
-The local Vite dev server can proxy /api routes only when you run a serverless emulator, such as `vercel dev`, or deploy a Vercel preview. Regular `npm run dev` runs the static client with starter content.
+GitHub Actions runs Admin E2E tests (mocked backend) and live API smoke checks. Don't treat mocked test success as proof that production authentication works.
 
-## Vercel deployment notes
-
-The API is implemented as Vercel functions in `api/`. The original `server/` Express scaffold remains for future independent backend deployment; it is not used by the admin editor.
-
-The repo contains no real passwords, API keys, or MongoDB credentials.
-
-
-## MongoDB Atlas and Render backend
-
-- Database: `ajshadowmusic`, collection: `shadowsites`.
-- Two initial documents have been seeded: `slug: draft` and `slug: published`.
-- The Express API runs through `server/src/index.js` and shares the authenticated handlers under `api/`.
-- For Render, import `render.yaml` (GitHub Blueprint) or create a Node web service from the repository. The service uses `npm install --no-audit --no-fund` to build, `npm run start:api` to start, and `/api/health` as its health check.
-- On Render, set `MONGODB_URI` to a connection string for a **dedicated least-privilege DB user** with readWrite on the `ajshadowmusic` database. Set `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` as secrets, and `CLIENT_ORIGIN` to the exact Vercel origin (HTTPS). Do not commit credentials.
-- Add Render outbound IPs to MongoDB Atlas Network Access. Avoid a broad public CIDR if stable egress is available.
-- On Vercel, set `VITE_API_BASE_URL` to the Render API origin, for example `https://ajshadowmusic-api.onrender.com` (replace with the actual URL, do not assume it exists), then rebuild the client.
-- The editor uses `/admin`; published public content is returned from the Render `/api/content` endpoint. Uploaded art uses signed Cloudinary uploads only when those secrets are configured.
-
-If the Vercel Git connection does not have project-creation privileges, import the repository manually via the Vercel dashboard after granting the connected GitHub app access. Once imported, use repository root, Vite, build command `npm run build`, and output directory `client/dist`.
+The repository contains no real database passwords or admin secrets.
